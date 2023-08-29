@@ -1,51 +1,64 @@
-import { readFile, writeFile } from 'fs/promises';
-import * as path from 'path';
-import { nanoid } from 'nanoid';
-
-const contactPath = path.resolve('models', 'contacts.json');
+import Contact from '../service/schemas/contacts.js';
 
 // pobranie aktualnej listy kontaktów
 export const listContacts = async () => {
-  const response = await readFile(contactPath);
-  return JSON.parse(response);
+  try {
+    return await Contact.find();
+  } catch (error) {
+    console.log('error - db full contact list', error);
+    throw error;
+  }
 };
 
 // pobranie kontaktu - wg podanego contactId
 export const getContactById = async contactId => {
-  const fullList = await listContacts();
-  const response = fullList.find(contact => contact.id === contactId);
-  return response || null;
+  try {
+    return await Contact.findOne({ _id: contactId });
+  } catch (error) {
+    console.log('error - db contact by id', error);
+    throw error;
+  }
 };
 
-// usuwanie kontaktu - wg podanego contactId (zwraca pierwsze wystąpienie - findIndex)
+// usuwanie kontaktu - wg podanego contactId
 export const removeContact = async contactId => {
-  const fullList = await listContacts();
-  const index = fullList.findIndex(contact => contact.id === contactId);
-  const response = index !== -1 ? fullList.splice(index, 1)[0] : null;
-  await writeFile(contactPath, JSON.stringify(fullList, null, 2));
-  return response;
+  try {
+    return await Contact.findByIdAndRemove({ _id: contactId });
+  } catch (error) {
+    console.log('error - remove from db contact by id', error);
+    throw error;
+  }
 };
 
 // dodawanie kontaktu - nadanie  id (przyjmuje name, email, phone)
-export const addContact = async ({ name, email, phone }) => {
-  const fullList = await listContacts();
-  const newContact = {
-    id: nanoid(),
-    name,
-    email,
-    phone,
-  };
-  fullList.push(newContact);
-  await writeFile(contactPath, JSON.stringify(fullList, null, 2));
+export const addContact = async body => {
+  try {
+    return await Contact.create(body);
+  } catch (error) {
+    console.log('error - db add contact');
+    throw error;
+  }
 };
 
-// aktualizacja kontaktu - zgodnie z id (przyjmuje name, email, phone)
-export const updateContact = async (id, { name, email, phone }) => {
-  const fullList = await listContacts();
-  const index = fullList.findIndex(contact => contact.id === id);
-  return index === -1
-    ? null
-    : ((fullList[index] = { id, name, email, phone }),
-      await writeFile(contactPath, JSON.stringify(fullList, null, 2)),
-      fullList[index]);
+// aktualizacja kontaktu - zgodnie z id
+export const updateContact = async (contactId, body) => {
+  try {
+    return await Contact.findByIdAndUpdate({ _id: contactId }, body, { new: true });
+  } catch (error) {
+    console.log('error - db update contact by id');
+    throw error;
+  }
+};
+
+// aktualizacja favorite - zgodnie z id
+export const updatedStatusContact = async (contactId, favorite) => {
+  try {
+    return await Contact.findByIdAndUpdate(
+      { _id: contactId },
+      { $set: { favorite: favorite } },
+      { new: true }
+    );
+  } catch (error) {
+    console.log('error - db update favorite by id');
+  }
 };
