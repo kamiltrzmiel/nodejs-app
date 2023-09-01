@@ -6,7 +6,7 @@ import {
   updateContact,
   updateFavorite,
   removeContact,
-} from '../../controllers/controllers.js';
+} from '../../controllers/contactsMongodb.js';
 import { ctrlTask } from '../../assets/ctrlTask.js';
 import { schemas } from '../../models/contacts.js';
 import { validateBody } from '../../middlewares/validateBody.js';
