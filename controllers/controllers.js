@@ -12,7 +12,7 @@ export const getContactById = async (req, res) => {
   if (!response) {
     throw errorRequest(404, 'Not found');
   }
-  res.json({ message: 'Contact by id', response });
+  res.status(200).json({ message: 'Contact by id', response });
 };
 
 export const addContact = async (req, res) => {
@@ -26,7 +26,7 @@ export const removeContact = async (req, res) => {
   if (!response) {
     throw errorRequest(404, 'Not found');
   }
-  res.json({
+  res.status(200).json({
     message: 'Contact deleted',
     response,
   });
@@ -38,7 +38,7 @@ export const updateContact = async (req, res) => {
   if (!response) {
     throw errorRequest(404, 'Not found');
   }
-  res.json({
+  res.status(200).json({
     message: 'Contact updated',
     response,
   });
@@ -50,7 +50,7 @@ export const updateFavorite = async (req, res) => {
   if (!response) {
     throw errorRequest(404, 'Not found');
   }
-  res.json({
+  res.status(200).json({
     message: 'Favorite item updated',
     response,
   });

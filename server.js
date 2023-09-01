@@ -21,9 +21,8 @@ const runServer = async () => {
     const connection = await mongoose.connect(uriDb);
     console.log('Database connection successful');
     app.listen(3000, () => {
-      console.log('Host: 127.0.0.1:3000/api/contacts/');
+      console.log('Server running. Use our API on port: 3000');
       console.log('>>> Press Ctrl+C to stop <<<');
-      console.log('Server running.');
     });
   } catch (error) {
     console.log('Cannot connect to MongoDB');
