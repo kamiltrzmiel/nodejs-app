@@ -1,84 +1,27 @@
 import express from 'express';
-import Joi from 'joi';
-import { errorRequest } from './../../assets/errorMessages.js';
 import {
   listContacts,
   getContactById,
-  removeContact,
   addContact,
   updateContact,
-} from './../../models/contacts.js';
+  updateFavorite,
+  removeContact,
+} from '../../controllers/controllers.js';
+import { ctrlTask } from '../../assets/ctrlTask.js';
+import { schemas } from '../../models/contacts.js';
+import { validateBody } from '../../middlewares/validateBody.js';
+import { validateId } from '../../middlewares/validateId.js';
 
 export const router = express.Router();
 
-const contactSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().required(),
-  phone: Joi.string().required(),
-});
-
-router.get('/', async (req, res, next) => {
-  try {
-    const response = await listContacts();
-    res.json({ message: 'All contacts list', response });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get('/:contactId', async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const response = await getContactById(contactId);
-    console.log(response);
-    if (!response) {
-      throw errorRequest(404);
-    }
-    res.json({ message: 'Contact by id', response });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.post('/', async (req, res, next) => {
-  try {
-    const { error } = contactSchema.validate(req.body);
-    if (error) {
-      throw errorRequest(400, 'missing req name field');
-    }
-    const response = await addContact(req.body);
-    res.status(201).json({ message: 'Contact added', response });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.delete('/:contactId', async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const response = await removeContact(contactId);
-    if (!response) {
-      throw errorRequest(404, 'not found');
-    }
-    res.json({ message: 'Contact deleted' });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.put('/:contactId', async (req, res, next) => {
-  try {
-    const { error } = contactSchema.validate(req.body);
-    if (error) {
-      throw errorRequest(400, 'Missing fields');
-    }
-    const { contactId } = req.params;
-    const response = await updateContact(contactId, req.body);
-    if (!response) {
-      throw errorRequest(404);
-    }
-    res.json({ message: 'Contact updated', response });
-  } catch (error) {
-    next(error);
-  }
-});
+router.get('/', ctrlTask(listContacts));
+router.get('/:contactId', validateId, ctrlTask(getContactById));
+router.post('/', validateBody(schemas.addSchema), ctrlTask(addContact));
+router.delete('/:contactId', validateId, ctrlTask(removeContact));
+router.put('/:contactId', validateId, validateBody(schemas.addSchema), ctrlTask(updateContact));
+router.patch(
+  '/:contactId',
+  validateId,
+  validateBody(schemas.updateFavSchema),
+  ctrlTask(updateFavorite)
+);
