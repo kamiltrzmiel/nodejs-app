@@ -12,7 +12,7 @@ import { schemas } from '../../models/contacts.js';
 import { validateBody } from '../../middlewares/validateBody.js';
 import { validateId } from '../../middlewares/validateId.js';
 
-export const router = express.Router();
+export const contactsRouter = express.Router();
 
 router.get('/', ctrlTask(listContacts));
 router.get('/:contactId', validateId, ctrlTask(getContactById));
