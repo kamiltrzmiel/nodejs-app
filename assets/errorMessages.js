@@ -1,4 +1,4 @@
-const errMessages = {
+export const errMessages = {
   400: 'Bad',
   401: 'Unauthorized',
   402: 'Payment Required',
@@ -9,6 +9,7 @@ const errMessages = {
   407: 'Proxy Authentication Required',
   408: 'Request Timeout',
   409: 'Conflict',
+  500: 'Internal Server Error',
 };
 
 export const errorRequest = (status, message = errMessages[status]) => {
