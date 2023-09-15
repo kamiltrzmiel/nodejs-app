@@ -1,8 +1,15 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import path from 'path';
+import fs from 'fs/promises';
+import Jimp from 'jimp';
+import gravatar from 'gravatar';
 import { User } from '../models/user.js';
 import { errorRequest } from '../assets/errorMessages.js';
+
 const secKey = process.env.SECRET_KEY;
+const avatarsDir = path.resolve('./', 'public', 'avatars');
+// console.log(avatarsDir);
 
 export const register = async (req, res) => {
   try {
@@ -12,7 +19,8 @@ export const register = async (req, res) => {
       throw errorRequest(409, 'Email in use');
     }
     const hashPassword = await bcrypt.hash(password, 10);
-    const result = await User.create({ name, email, password: hashPassword });
+    const avatarURL = gravatar.url(email);
+    const result = await User.create({ name, email, password: hashPassword, avatarURL });
 
     res.status(201).json({
       name: result.name,
@@ -97,5 +105,39 @@ export const updateUserSubscription = async (req, res) => {
     });
   } catch (err) {
     res.status(err.statusCode || 500).json({ error: err.message || 'Internal Server Error' });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
+    const { _id } = req.user;
+    const { path: tempUpload, originalname } = req.file;
+    const extension = originalname.split('.').pop();
+    const filename = `${_id}.${extension}`;
+
+    const resultUpload = path.join(avatarsDir, filename);
+
+    Jimp.read(tempUpload, async (error, avatar) => {
+      try {
+        if (error) throw error;
+        await avatar.resize(250, 250).writeAsync(tempUpload);
+        fs.rename(tempUpload, resultUpload);
+      } catch (error) {
+        throw error;
+      }
+    });
+
+    const avatarURL = path.join('public', 'avatars', filename);
+    await User.findByIdAndUpdate(_id, { avatarURL });
+
+    res.status(200).json({
+      message: 'Avatar updated',
+      avatarURL,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'An error occurred while updating the avatar',
+      error,
+    });
   }
 };
