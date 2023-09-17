@@ -2,12 +2,14 @@ import express from 'express';
 import { ctrlTask } from '../../assets/ctrlTask.js';
 import { validateBody } from '../../middlewares/validateBody.js';
 import { authenticate } from '../../middlewares/authenticate.js';
+import { upload } from '../../middlewares/upload.js';
 import {
   register,
   login,
   logout,
   getCurrent,
   updateUserSubscription,
+  updateAvatar,
 } from '../../controllers/authenticationJwt.js';
 import { schemas } from '../../models/user.js';
 
@@ -23,3 +25,4 @@ authRouter.patch(
   validateBody(schemas.updateSubscriptionSchema),
   ctrlTask(updateUserSubscription)
 );
+authRouter.patch('/avatars', authenticate, upload.single('avatar'), ctrlTask(updateAvatar));
