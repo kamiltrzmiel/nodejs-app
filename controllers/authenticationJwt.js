@@ -6,10 +6,12 @@ import Jimp from 'jimp';
 import gravatar from 'gravatar';
 import { User } from '../models/user.js';
 import { errorRequest } from '../assets/errorMessages.js';
+import { sendEmail } from '../assets/sendEmail.js';
+import { createVerifyEmail } from '../assets/createVerifyEmail.js';
+import { nanoid } from 'nanoid';
 
 const secKey = process.env.SECRET_KEY;
 const avatarsDir = path.resolve('./', 'public', 'avatars');
-// console.log(avatarsDir);
 
 export const register = async (req, res) => {
   try {
@@ -20,7 +22,17 @@ export const register = async (req, res) => {
     }
     const hashPassword = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email);
-    const result = await User.create({ name, email, password: hashPassword, avatarURL });
+    const verificationToken = nanoid();
+    const result = await User.create({
+      name,
+      email,
+      password: hashPassword,
+      avatarURL,
+      verificationToken,
+    });
+
+    const mail = createVerifyEmail(email, verificationToken);
+    await sendEmail(mail);
 
     res.status(201).json({
       name: result.name,
@@ -32,11 +44,49 @@ export const register = async (req, res) => {
   }
 };
 
+export const verify = async (req, res) => {
+  try {
+    const { verificationToken } = req.params;
+    const user = await User.findOne({ verificationToken });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    await User.findByIdAndUpdate(user._id, { verify: true, verificationToken: '' });
+
+    res.status(200).json({
+      message: 'Verification successful',
+    });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message || 'Internal Server Error' });
+  }
+};
+
+export const resendEmail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw RequestError(404);
+  }
+
+  if (user.verify) {
+    throw RequestError(400, 'Verification has already been passed');
+  }
+
+  const mail = createVerifyEmail(email, user.verificationToken);
+
+  await sendEmail(mail);
+
+  res.json({
+    message: 'Verification email sent',
+  });
+};
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user) {
+    if (!user || !user.verify) {
       throw errorRequest(401, 'Email or password is wrong');
     }
     const passwordCompare = await bcrypt.compare(password, user.password);

@@ -10,12 +10,19 @@ import {
   getCurrent,
   updateUserSubscription,
   updateAvatar,
+  verify,
+  resendEmail,
 } from '../../controllers/authenticationJwt.js';
 import { schemas } from '../../models/user.js';
 
 export const authRouter = express.Router();
 
+//rejestracja
 authRouter.post('/signup', validateBody(schemas.registerSchema), ctrlTask(register));
+authRouter.get('/verify/:verificationToken', ctrlTask(verify));
+authRouter.post('/verify', validateBody(schemas.verifyEmailSchema), ctrlTask(resendEmail));
+
+//logowanie
 authRouter.post('/login', validateBody(schemas.loginSchema), ctrlTask(login));
 authRouter.get('/current', authenticate, ctrlTask(getCurrent));
 authRouter.get('/logout', authenticate, ctrlTask(logout));
